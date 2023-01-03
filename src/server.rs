@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use dashmap::DashMap;
+use tokio::time::sleep;
 use warp::http::StatusCode;
 use warp::reject::Reject;
 use warp::{Filter, Rejection, Reply, Server};
@@ -46,7 +47,21 @@ impl Reject for RatelimitExceeded {}
 
 #[allow(opaque_hidden_inferred_bound)]
 pub fn create_server() -> Server<impl Filter<Extract = impl Reply> + Clone> {
+    // Prune ratelimits on loop
+
     let ratelimits = Arc::new(DashMap::<IpAddr, Ratelimit>::new());
+    tokio::spawn({
+        let ratelimits = ratelimits.clone();
+        async move {
+            loop {
+                sleep(Duration::from_secs(3600)).await;
+                prune_ratelimits(&ratelimits);
+            }
+        }
+    });
+
+    // Run server with routes
+
     warp::serve(build_routes(ratelimits))
 }
 
@@ -172,4 +187,11 @@ async fn check_ratelimit(
     Err(warp::reject::custom(RatelimitExceeded {
         retry_after: timestamp - now,
     }))
+}
+
+// Remove unused ratelimit entries from map
+
+fn prune_ratelimits(ratelimits: &DashMap<IpAddr, Ratelimit>) {
+    println!("pruning ratelimits");
+    todo!();
 }
