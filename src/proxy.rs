@@ -17,15 +17,15 @@ pub async fn get(
 
     let response = client
         .get(if let Some(q) = query {
-            String::from(ENDPOINT) + path.as_str() + "?" + &q
+            ENDPOINT.to_owned() + path.as_str() + "?" + &q
         } else {
-            String::from(ENDPOINT) + path.as_str()
+            ENDPOINT.to_owned() + path.as_str()
         })
         .send()
         .await
         .map_err(|_| ())?;
     let status = response.status();
-    let content_type = response.headers().get("content-type").map(|h| h.clone());
+    let content_type = response.headers().get("content-type").cloned();
 
     // Get response data
 

@@ -52,9 +52,9 @@ async fn main() {
                     .scheme("https")
                     .authority(DOMAIN)
                     .path_and_query(if let Some(q) = query {
-                        String::from(path.as_str()) + "?" + &q
+                        path.as_str().to_owned() + "?" + &q
                     } else {
-                        String::from(path.as_str())
+                        path.as_str().to_owned()
                     })
                     .build()
                     .unwrap(),
