@@ -60,7 +60,7 @@ pub fn create_server() -> Server<impl Filter<Extract = impl Reply> + Clone> {
         }
     });
 
-    // Run server with routes
+    // Create server with routes
 
     warp::serve(build_routes(ratelimits))
 }
