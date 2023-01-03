@@ -1,6 +1,6 @@
 // Imports
 
-use crate::config::{COOLDOWN, RATELIMIT};
+use crate::config::{COOLDOWN, PRUNE_TIME, RATELIMIT};
 use crate::proxy;
 use crate::utils;
 
@@ -54,7 +54,7 @@ pub fn create_server() -> Server<impl Filter<Extract = impl Reply> + Clone> {
         let ratelimits = ratelimits.clone();
         async move {
             loop {
-                sleep(Duration::from_secs(3600)).await;
+                sleep(Duration::from_secs(PRUNE_TIME)).await;
                 prune_ratelimits(&ratelimits);
             }
         }
@@ -192,6 +192,8 @@ async fn check_ratelimit(
 // Remove unused ratelimit entries from map
 
 fn prune_ratelimits(ratelimits: &DashMap<IpAddr, Ratelimit>) {
-    println!("pruning ratelimits");
-    todo!();
+    ratelimits.retain(|_, counter| {
+        let timestamp = counter.timestamp.load(Ordering::Acquire);
+        timestamp + PRUNE_TIME * 1000 > utils::get_time()
+    });
 }
